@@ -2,5 +2,4 @@ numpy
 streamlit
 tensorflow
 transformers
-h5py
-pickle5==0.0.11
+
