@@ -6,8 +6,9 @@ from tensorflow import keras
 import pickle
 from custom_layers import PositionalEmbedding, MultiHeadAttention, TransformerEncoder, TransformerDecoder
 
+model_path = 'https://github.com/Ankitha007/nlp/blob/main/transformer_model.h5'
 # Load the saved Transformer model
-transformer = keras.models.load_model('transformer_model.h5', custom_objects={
+transformer = keras.models.load_model(model_path, custom_objects={
     'PositionalEmbedding': PositionalEmbedding,
     'MultiHeadAttention': MultiHeadAttention,
     'TransformerEncoder': TransformerEncoder,
