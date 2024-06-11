@@ -56,10 +56,13 @@ if 'source_vectorization' in locals() and 'target_vectorization' in locals():
 
     def decode_sequence(input_sentence):
         tokenized_input_sentence = source_vectorization([input_sentence])
+        st.write("Tokenized input sentence:", tokenized_input_sentence.shape)
         decoded_sentence = "[start]"
         for i in range(max_decoded_sentence_length):
             tokenized_target_sentence = target_vectorization([decoded_sentence])[:, :-1]
+            st.write(f"Tokenized target sentence at step {i}:", tokenized_target_sentence.shape)
             predictions = transformer([tokenized_input_sentence, tokenized_target_sentence])
+            st.write(f"Predictions at step {i}:", predictions.shape)
             sampled_token_index = np.argmax(predictions[0, i, :])
             sampled_token = target_index_lookup[sampled_token_index]
             decoded_sentence += " " + sampled_token
@@ -75,12 +78,15 @@ if 'source_vectorization' in locals() and 'target_vectorization' in locals():
     input_sentence = st.text_input("Enter English sentence:")
     if st.button("Translate and Analyze"):
         if input_sentence:
-            translated_sentence = decode_sequence(input_sentence)
-            # Initialize sentiment analysis pipeline for German language
-            sentiment_pipeline = pipeline("sentiment-analysis", model="oliverguhr/german-sentiment-bert")
-            sentiment = sentiment_pipeline(translated_sentence)
-            st.write("**German Translation:**", translated_sentence)
-            st.write("**Sentiment Analysis:**", sentiment)
+            try:
+                translated_sentence = decode_sequence(input_sentence)
+                # Initialize sentiment analysis pipeline for German language
+                sentiment_pipeline = pipeline("sentiment-analysis", model="oliverguhr/german-sentiment-bert")
+                sentiment = sentiment_pipeline(translated_sentence)
+                st.write("**German Translation:**", translated_sentence)
+                st.write("**Sentiment Analysis:**", sentiment)
+            except Exception as e:
+                st.error(f"Error during translation or analysis: {e}")
         else:
             st.write("Please enter a sentence.")
 else:
