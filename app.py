@@ -4,6 +4,7 @@ import tensorflow as tf
 from transformers import pipeline
 from tensorflow import keras
 import pickle
+import os
 from custom_layers import PositionalEmbedding, MultiHeadAttention, TransformerEncoder, TransformerDecoder
 
 model_path = 'transformer_model.h5'
