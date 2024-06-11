@@ -25,8 +25,10 @@ model_path = 'transformer_model.h5'
 
 # Download the model file if it does not exist
 if not os.path.exists(model_path):
+    st.write(f"Downloading model from Google Drive...")
     gdown.download(f"https://drive.google.com/uc?id={model_file_id}", model_path, quiet=False)
 
+# Verify if the model file exists and is not corrupted
 model_loaded = False
 if os.path.exists(model_path):
     try:
@@ -41,6 +43,8 @@ if os.path.exists(model_path):
         model_loaded = True
     except Exception as e:
         st.error(f"Error loading the model: {e}")
+else:
+    st.error("Model file not found or is corrupted.")
 
 # Load the vectorization layers
 source_vectorization_loaded = False
