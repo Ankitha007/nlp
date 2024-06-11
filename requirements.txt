@@ -2,5 +2,5 @@ numpy
 streamlit
 tensorflow
 transformers
-h5py
+h5py>=3.7.0
 pickle5
