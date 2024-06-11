@@ -23,14 +23,23 @@ def custom_standardization(input_string):
 model_file_id = '1ib-A2IFcrlX-HN-QsGhHBjHQh5Ue5Zsm'
 model_path = 'transformer_model.h5'
 
-# Download the model file if it does not exist
-if not os.path.exists(model_path):
+# Function to verify file integrity
+def verify_file(filepath):
+    try:
+        with open(filepath, 'rb') as f:
+            f.read()
+        return True
+    except Exception as e:
+        return False
+
+# Download the model file if it does not exist or is corrupted
+if not os.path.exists(model_path) or not verify_file(model_path):
     st.write(f"Downloading model from Google Drive...")
     gdown.download(f"https://drive.google.com/uc?id={model_file_id}", model_path, quiet=False)
 
 # Verify if the model file exists and is not corrupted
 model_loaded = False
-if os.path.exists(model_path):
+if os.path.exists(model_path) and verify_file(model_path):
     try:
         transformer = keras.models.load_model(model_path, custom_objects={
             'PositionalEmbedding': PositionalEmbedding,
