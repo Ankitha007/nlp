@@ -7,13 +7,20 @@ import pickle
 from custom_layers import PositionalEmbedding, MultiHeadAttention, TransformerEncoder, TransformerDecoder
 
 model_path = 'transformer_model.h5'
-# Load the saved Transformer model
-transformer = keras.models.load_model(model_path, custom_objects={
-    'PositionalEmbedding': PositionalEmbedding,
-    'MultiHeadAttention': MultiHeadAttention,
-    'TransformerEncoder': TransformerEncoder,
-    'TransformerDecoder': TransformerDecoder
-})
+if not os.path.exists(model_path):
+    st.error(f"Model file not found: {model_path}")
+else:
+    # Load the saved Transformer model
+    try:
+        transformer = keras.models.load_model(model_path, custom_objects={
+            'PositionalEmbedding': PositionalEmbedding,
+            'MultiHeadAttention': MultiHeadAttention,
+            'TransformerEncoder': TransformerEncoder,
+            'TransformerDecoder': TransformerDecoder
+        })
+        st.success("Model loaded successfully")
+    except Exception as e:
+        st.error(f"Error loading the model: {e}")
 
 # Load the vectorization layers
 with open('source_vectorization.pkl', 'rb') as f:
