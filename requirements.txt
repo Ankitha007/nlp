@@ -1,3 +1,5 @@
 streamlit
 tensorflow
 transformers
+h5py
+pickle5
