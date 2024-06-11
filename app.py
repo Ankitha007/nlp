@@ -11,15 +11,15 @@ from custom_layers import PositionalEmbedding, MultiHeadAttention, TransformerEn
 from tensorflow.keras.layers import TextVectorization
 from tensorflow.keras.utils import register_keras_serializable
 
-# Define and register the custom standardization function
 @register_keras_serializable()
 def custom_standardization(input_string):
     lowercase = tf.strings.lower(input_string)
     stripped_html = tf.strings.regex_replace(lowercase, '<br />', ' ')
     return tf.strings.regex_replace(stripped_html, '[%s]' % re.escape(string.punctuation), '')
 
-# Load the model
+# Check if the model file exists
 model_path = 'transformer_model.h5'
+model_loaded = False
 if not os.path.exists(model_path):
     st.error(f"Model file not found: {model_path}")
 else:
@@ -32,8 +32,10 @@ else:
             'custom_standardization': custom_standardization
         })
         st.success("Model loaded successfully")
+        model_loaded = True
     except Exception as e:
         st.error(f"Error loading the model: {e}")
+        st.stop()
 
 # Load the vectorization layers
 try:
@@ -41,24 +43,29 @@ try:
         source_vectorization = pickle.load(f)
 except Exception as e:
     st.error(f"Error loading source vectorization: {e}")
+    st.stop()
 
 try:
     with open('target_vectorization.pkl', 'rb') as f:
         target_vectorization = pickle.load(f)
 except Exception as e:
     st.error(f"Error loading target vectorization: {e}")
+    st.stop()
 
-if 'source_vectorization' in locals() and 'target_vectorization' in locals() and 'transformer' in locals():
+if model_loaded:
     target_vocab = target_vectorization.get_vocabulary()
     target_index_lookup = dict(zip(range(len(target_vocab)), target_vocab))
     max_decoded_sentence_length = 30
 
     def decode_sequence(input_sentence):
         tokenized_input_sentence = source_vectorization([input_sentence])
+        st.write(f"Tokenized input sentence shape: {tokenized_input_sentence.shape}")
         decoded_sentence = "[start]"
         for i in range(max_decoded_sentence_length):
             tokenized_target_sentence = target_vectorization([decoded_sentence])[:, :-1]
+            st.write(f"Tokenized target sentence shape at step {i}: {tokenized_target_sentence.shape}")
             predictions = transformer([tokenized_input_sentence, tokenized_target_sentence])
+            st.write(f"Predictions shape at step {i}: {predictions.shape}")
             sampled_token_index = np.argmax(predictions[0, i, :])
             sampled_token = target_index_lookup[sampled_token_index]
             decoded_sentence += " " + sampled_token
@@ -81,7 +88,5 @@ if 'source_vectorization' in locals() and 'target_vectorization' in locals() and
                 st.write("**Sentiment Analysis:**", sentiment)
             except Exception as e:
                 st.error(f"Error during translation or analysis: {e}")
-        else:
-            st.write("Please enter a sentence.")
 else:
     st.error("Model or vectorization layers are not loaded correctly.")
