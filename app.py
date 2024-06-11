@@ -10,19 +10,25 @@ import string
 from custom_layers import PositionalEmbedding, MultiHeadAttention, TransformerEncoder, TransformerDecoder
 from tensorflow.keras.layers import TextVectorization
 from tensorflow.keras.utils import register_keras_serializable
+import gdown
 
+# Define and register the custom standardization function
 @register_keras_serializable()
 def custom_standardization(input_string):
     lowercase = tf.strings.lower(input_string)
     stripped_html = tf.strings.regex_replace(lowercase, '<br />', ' ')
     return tf.strings.regex_replace(stripped_html, '[%s]' % re.escape(string.punctuation), '')
 
-# Check if the model file exists
+# Google Drive file ID for the model
+model_file_id = '1ib-A2IFcrlX-HN-QsGhHBjHQh5Ue5Zsm'
 model_path = 'transformer_model.h5'
-model_loaded = False
+
+# Download the model file if it does not exist
 if not os.path.exists(model_path):
-    st.error(f"Model file not found: {model_path}")
-else:
+    gdown.download(f"https://drive.google.com/uc?id={model_file_id}", model_path, quiet=False)
+
+model_loaded = False
+if os.path.exists(model_path):
     try:
         transformer = keras.models.load_model(model_path, custom_objects={
             'PositionalEmbedding': PositionalEmbedding,
@@ -35,24 +41,26 @@ else:
         model_loaded = True
     except Exception as e:
         st.error(f"Error loading the model: {e}")
-        st.stop()
 
 # Load the vectorization layers
+source_vectorization_loaded = False
+target_vectorization_loaded = False
+
 try:
     with open('source_vectorization.pkl', 'rb') as f:
         source_vectorization = pickle.load(f)
+    source_vectorization_loaded = True
 except Exception as e:
     st.error(f"Error loading source vectorization: {e}")
-    st.stop()
 
 try:
     with open('target_vectorization.pkl', 'rb') as f:
         target_vectorization = pickle.load(f)
+    target_vectorization_loaded = True
 except Exception as e:
     st.error(f"Error loading target vectorization: {e}")
-    st.stop()
 
-if model_loaded:
+if model_loaded and source_vectorization_loaded and target_vectorization_loaded:
     target_vocab = target_vectorization.get_vocabulary()
     target_index_lookup = dict(zip(range(len(target_vocab)), target_vocab))
     max_decoded_sentence_length = 30
