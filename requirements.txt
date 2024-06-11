@@ -3,4 +3,5 @@ streamlit
 tensorflow
 transformers
 h5py>=3.7.0
+gdown
 
