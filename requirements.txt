@@ -3,4 +3,4 @@ streamlit
 tensorflow
 transformers
 h5py
-pickle
+pickle5
