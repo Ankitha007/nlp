@@ -20,6 +20,7 @@ def custom_standardization(input_string):
 
 # Verify if the model file exists
 model_path = 'transformer_model.h5'
+model_loaded = False
 if not os.path.exists(model_path):
     st.error(f"Model file not found: {model_path}")
 else:
@@ -33,23 +34,29 @@ else:
             'custom_standardization': custom_standardization
         })
         st.success("Model loaded successfully")
+        model_loaded = True
     except Exception as e:
         st.error(f"Error loading the model: {e}")
 
 # Load the vectorization layers
+source_vectorization_loaded = False
+target_vectorization_loaded = False
+
 try:
     with open('source_vectorization.pkl', 'rb') as f:
         source_vectorization = pickle.load(f)
+    source_vectorization_loaded = True
 except Exception as e:
     st.error(f"Error loading source vectorization: {e}")
 
 try:
     with open('target_vectorization.pkl', 'rb') as f:
         target_vectorization = pickle.load(f)
+    target_vectorization_loaded = True
 except Exception as e:
     st.error(f"Error loading target vectorization: {e}")
 
-if 'source_vectorization' in locals() and 'target_vectorization' in locals():
+if model_loaded and source_vectorization_loaded and target_vectorization_loaded:
     target_vocab = target_vectorization.get_vocabulary()
     target_index_lookup = dict(zip(range(len(target_vocab)), target_vocab))
     max_decoded_sentence_length = 30
