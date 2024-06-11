@@ -18,13 +18,11 @@ def custom_standardization(input_string):
     stripped_html = tf.strings.regex_replace(lowercase, '<br />', ' ')
     return tf.strings.regex_replace(stripped_html, '[%s]' % re.escape(string.punctuation), '')
 
-# Verify if the model file exists
+# Load the model
 model_path = 'transformer_model.h5'
-model_loaded = False
 if not os.path.exists(model_path):
     st.error(f"Model file not found: {model_path}")
 else:
-    # Load the saved Transformer model
     try:
         transformer = keras.models.load_model(model_path, custom_objects={
             'PositionalEmbedding': PositionalEmbedding,
@@ -34,42 +32,33 @@ else:
             'custom_standardization': custom_standardization
         })
         st.success("Model loaded successfully")
-        model_loaded = True
     except Exception as e:
         st.error(f"Error loading the model: {e}")
 
 # Load the vectorization layers
-source_vectorization_loaded = False
-target_vectorization_loaded = False
-
 try:
     with open('source_vectorization.pkl', 'rb') as f:
         source_vectorization = pickle.load(f)
-    source_vectorization_loaded = True
 except Exception as e:
     st.error(f"Error loading source vectorization: {e}")
 
 try:
     with open('target_vectorization.pkl', 'rb') as f:
         target_vectorization = pickle.load(f)
-    target_vectorization_loaded = True
 except Exception as e:
     st.error(f"Error loading target vectorization: {e}")
 
-if model_loaded and source_vectorization_loaded and target_vectorization_loaded:
+if 'source_vectorization' in locals() and 'target_vectorization' in locals() and 'transformer' in locals():
     target_vocab = target_vectorization.get_vocabulary()
     target_index_lookup = dict(zip(range(len(target_vocab)), target_vocab))
     max_decoded_sentence_length = 30
 
     def decode_sequence(input_sentence):
         tokenized_input_sentence = source_vectorization([input_sentence])
-        st.write("Tokenized input sentence:", tokenized_input_sentence.shape)
         decoded_sentence = "[start]"
         for i in range(max_decoded_sentence_length):
             tokenized_target_sentence = target_vectorization([decoded_sentence])[:, :-1]
-            st.write(f"Tokenized target sentence at step {i}:", tokenized_target_sentence.shape)
             predictions = transformer([tokenized_input_sentence, tokenized_target_sentence])
-            st.write(f"Predictions at step {i}:", predictions.shape)
             sampled_token_index = np.argmax(predictions[0, i, :])
             sampled_token = target_index_lookup[sampled_token_index]
             decoded_sentence += " " + sampled_token
@@ -78,7 +67,6 @@ if model_loaded and source_vectorization_loaded and target_vectorization_loaded:
         decoded_sentence = decoded_sentence.replace("[start]", "").replace("[end]", "").strip()
         return decoded_sentence
 
-    # Streamlit app
     st.title("English to German Translation and Sentiment Analysis")
     st.write("Enter an English sentence and get its German translation along with sentiment analysis.")
 
@@ -87,7 +75,6 @@ if model_loaded and source_vectorization_loaded and target_vectorization_loaded:
         if input_sentence:
             try:
                 translated_sentence = decode_sequence(input_sentence)
-                # Initialize sentiment analysis pipeline for German language
                 sentiment_pipeline = pipeline("sentiment-analysis", model="oliverguhr/german-sentiment-bert")
                 sentiment = sentiment_pipeline(translated_sentence)
                 st.write("**German Translation:**", translated_sentence)
