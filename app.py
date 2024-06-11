@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from transformers import pipeline
 from tensorflow import keras
-import pickle5 as pickle
+import pickle
 from custom_layers import PositionalEmbedding, MultiHeadAttention, TransformerEncoder, TransformerDecoder
 
 # Load the saved Transformer model
