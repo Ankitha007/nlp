@@ -5,7 +5,18 @@ from transformers import pipeline
 from tensorflow import keras
 import pickle
 import os
+import re
+import string
 from custom_layers import PositionalEmbedding, MultiHeadAttention, TransformerEncoder, TransformerDecoder
+from tensorflow.keras.layers import TextVectorization
+from tensorflow.keras.utils import register_keras_serializable
+
+# Define and register the custom standardization function
+@register_keras_serializable()
+def custom_standardization(input_string):
+    lowercase = tf.strings.lower(input_string)
+    stripped_html = tf.strings.regex_replace(lowercase, '<br />', ' ')
+    return tf.strings.regex_replace(stripped_html, '[%s]' % re.escape(string.punctuation), '')
 
 # Verify if the model file exists
 model_path = 'transformer_model.h5'
@@ -18,7 +29,8 @@ else:
             'PositionalEmbedding': PositionalEmbedding,
             'MultiHeadAttention': MultiHeadAttention,
             'TransformerEncoder': TransformerEncoder,
-            'TransformerDecoder': TransformerDecoder
+            'TransformerDecoder': TransformerDecoder,
+            'custom_standardization': custom_standardization
         })
         st.success("Model loaded successfully")
     except Exception as e:
