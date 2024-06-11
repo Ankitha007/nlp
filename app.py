@@ -39,9 +39,6 @@ def decode_sequence(input_sentence):
     decoded_sentence = decoded_sentence.replace("[start]", "").replace("[end]", "").strip()
     return decoded_sentence
 
-# Initialize sentiment analysis pipeline for German language
-sentiment_pipeline = pipeline("sentiment-analysis", model="oliverguhr/german-sentiment-bert")
-
 # Streamlit app
 st.title("English to German Translation and Sentiment Analysis")
 st.write("Enter an English sentence and get its German translation along with sentiment analysis.")
@@ -50,6 +47,8 @@ input_sentence = st.text_input("Enter English sentence:")
 if st.button("Translate and Analyze"):
     if input_sentence:
         translated_sentence = decode_sequence(input_sentence)
+        # Initialize sentiment analysis pipeline for German language
+        sentiment_pipeline = pipeline("sentiment-analysis", model="oliverguhr/german-sentiment-bert")
         sentiment = sentiment_pipeline(translated_sentence)
         st.write("**German Translation:**", translated_sentence)
         st.write("**Sentiment Analysis:**", sentiment)
