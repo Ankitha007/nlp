@@ -1,7 +1,5 @@
-numpy
-streamlit
-tensorflow
-transformers
-h5py>=3.7.0
-gdown
-
+Flask==2.0.1
+gunicorn==20.1.0
+pandas==1.3.0
+torch==1.9.0
+transformers==4.9.1
