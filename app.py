@@ -1,4 +1,4 @@
-import streamlit as st
+from flask import Flask, request, jsonify
 import numpy as np
 import tensorflow as tf
 from transformers import pipeline
@@ -12,6 +12,8 @@ from tensorflow.keras.layers import TextVectorization
 from tensorflow.keras.utils import register_keras_serializable
 import gdown
 
+app = Flask(__name__)
+
 # Define and register the custom standardization function
 @register_keras_serializable()
 def custom_standardization(input_string):
@@ -20,7 +22,7 @@ def custom_standardization(input_string):
     return tf.strings.regex_replace(stripped_html, '[%s]' % re.escape(string.punctuation), '')
 
 # Google Drive file ID for the model
-model_file_id = '1ib-A2IFcrlX-HN-QsGhHBjHQh5Ue5Zsm'
+model_file_id = '1jkeJL-gExfzMa2oWvno5PgRb465RhLUl'
 model_path = 'transformer_model.h5'
 
 # Function to verify file integrity
@@ -34,7 +36,6 @@ def verify_file(filepath):
 
 # Download the model file if it does not exist or is corrupted
 if not os.path.exists(model_path) or not verify_file(model_path):
-    st.write(f"Downloading model from Google Drive...")
     gdown.download(f"https://drive.google.com/uc?id={model_file_id}", model_path, quiet=False)
 
 # Verify if the model file exists and is not corrupted
@@ -48,12 +49,9 @@ if os.path.exists(model_path) and verify_file(model_path):
             'TransformerDecoder': TransformerDecoder,
             'custom_standardization': custom_standardization
         })
-        st.success("Model loaded successfully")
         model_loaded = True
     except Exception as e:
-        st.error(f"Error loading the model: {e}")
-else:
-    st.error("Model file not found or is corrupted.")
+        print(f"Error loading the model: {e}")
 
 # Load the vectorization layers
 source_vectorization_loaded = False
@@ -64,14 +62,14 @@ try:
         source_vectorization = pickle.load(f)
     source_vectorization_loaded = True
 except Exception as e:
-    st.error(f"Error loading source vectorization: {e}")
+    print(f"Error loading source vectorization: {e}")
 
 try:
     with open('target_vectorization.pkl', 'rb') as f:
         target_vectorization = pickle.load(f)
     target_vectorization_loaded = True
 except Exception as e:
-    st.error(f"Error loading target vectorization: {e}")
+    print(f"Error loading target vectorization: {e}")
 
 if model_loaded and source_vectorization_loaded and target_vectorization_loaded:
     target_vocab = target_vectorization.get_vocabulary()
@@ -80,13 +78,10 @@ if model_loaded and source_vectorization_loaded and target_vectorization_loaded:
 
     def decode_sequence(input_sentence):
         tokenized_input_sentence = source_vectorization([input_sentence])
-        st.write(f"Tokenized input sentence shape: {tokenized_input_sentence.shape}")
         decoded_sentence = "[start]"
         for i in range(max_decoded_sentence_length):
             tokenized_target_sentence = target_vectorization([decoded_sentence])[:, :-1]
-            st.write(f"Tokenized target sentence shape at step {i}: {tokenized_target_sentence.shape}")
             predictions = transformer([tokenized_input_sentence, tokenized_target_sentence])
-            st.write(f"Predictions shape at step {i}: {predictions.shape}")
             sampled_token_index = np.argmax(predictions[0, i, :])
             sampled_token = target_index_lookup[sampled_token_index]
             decoded_sentence += " " + sampled_token
@@ -95,19 +90,22 @@ if model_loaded and source_vectorization_loaded and target_vectorization_loaded:
         decoded_sentence = decoded_sentence.replace("[start]", "").replace("[end]", "").strip()
         return decoded_sentence
 
-    st.title("English to German Translation and Sentiment Analysis")
-    st.write("Enter an English sentence and get its German translation along with sentiment analysis.")
-
-    input_sentence = st.text_input("Enter English sentence:")
-    if st.button("Translate and Analyze"):
+    @app.route('/translate', methods=['POST'])
+    def translate():
+        data = request.get_json()
+        input_sentence = data.get("sentence")
         if input_sentence:
             try:
                 translated_sentence = decode_sequence(input_sentence)
                 sentiment_pipeline = pipeline("sentiment-analysis", model="oliverguhr/german-sentiment-bert")
                 sentiment = sentiment_pipeline(translated_sentence)
-                st.write("**German Translation:**", translated_sentence)
-                st.write("**Sentiment Analysis:**", sentiment)
+                return jsonify({
+                    "translated_sentence": translated_sentence,
+                    "sentiment": sentiment
+                })
             except Exception as e:
-                st.error(f"Error during translation or analysis: {e}")
-else:
-    st.error("Model or vectorization layers are not loaded correctly.")
+                return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "No sentence provided"}), 400
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8000)
