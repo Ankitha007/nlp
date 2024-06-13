@@ -50,6 +50,7 @@ if os.path.exists(model_path) and verify_file(model_path):
             'custom_standardization': custom_standardization
         })
         model_loaded = True
+        print("Transformer model loaded successfully.")
     except Exception as e:
         print(f"Error loading the model: {e}")
 
@@ -61,6 +62,7 @@ try:
     with open('source_vectorization.pkl', 'rb') as f:
         source_vectorization = pickle.load(f)
     source_vectorization_loaded = True
+    print("Source vectorization loaded successfully.")
 except Exception as e:
     print(f"Error loading source vectorization: {e}")
 
@@ -68,44 +70,50 @@ try:
     with open('target_vectorization.pkl', 'rb') as f:
         target_vectorization = pickle.load(f)
     target_vectorization_loaded = True
+    print("Target vectorization loaded successfully.")
 except Exception as e:
     print(f"Error loading target vectorization: {e}")
 
-if model_loaded and source_vectorization_loaded and target_vectorization_loaded:
-    target_vocab = target_vectorization.get_vocabulary()
-    target_index_lookup = dict(zip(range(len(target_vocab)), target_vocab))
-    max_decoded_sentence_length = 30
+# Define the maximum length for decoded sentences
+max_decoded_sentence_length = 30
 
-    def decode_sequence(input_sentence):
-        tokenized_input_sentence = source_vectorization([input_sentence])
-        decoded_sentence = "[start]"
-        for i in range(max_decoded_sentence_length):
-            tokenized_target_sentence = target_vectorization([decoded_sentence])[:, :-1]
-            predictions = transformer([tokenized_input_sentence, tokenized_target_sentence])
-            sampled_token_index = np.argmax(predictions[0, i, :])
-            sampled_token = target_index_lookup[sampled_token_index]
-            decoded_sentence += " " + sampled_token
-            if sampled_token == "[end]":
-                break
-        decoded_sentence = decoded_sentence.replace("[start]", "").replace("[end]", "").strip()
-        return decoded_sentence
+# Function to decode input sentence using the loaded transformer model
+def decode_sequence(input_sentence):
+    tokenized_input_sentence = source_vectorization([input_sentence])
+    decoded_sentence = "[start]"
+    for i in range(max_decoded_sentence_length):
+        tokenized_target_sentence = target_vectorization([decoded_sentence])[:, :-1]
+        predictions = transformer([tokenized_input_sentence, tokenized_target_sentence])
+        sampled_token_index = np.argmax(predictions[0, i, :])
+        sampled_token = target_index_lookup[sampled_token_index]
+        decoded_sentence += " " + sampled_token
+        if sampled_token == "[end]":
+            break
+    decoded_sentence = decoded_sentence.replace("[start]", "").replace("[end]", "").strip()
+    return decoded_sentence
 
-    @app.route('/translate', methods=['POST'])
-    def translate():
-        data = request.get_json()
-        input_sentence = data.get("sentence")
-        if input_sentence:
-            try:
-                translated_sentence = decode_sequence(input_sentence)
-                sentiment_pipeline = pipeline("sentiment-analysis", model="oliverguhr/german-sentiment-bert")
-                sentiment = sentiment_pipeline(translated_sentence)
-                return jsonify({
-                    "translated_sentence": translated_sentence,
-                    "sentiment": sentiment
-                })
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
-        return jsonify({"error": "No sentence provided"}), 400
+# Route for translation endpoint
+@app.route('/translate', methods=['POST'])
+def translate():
+    data = request.get_json()
+    input_sentence = data.get("sentence")
+    if input_sentence:
+        try:
+            translated_sentence = decode_sequence(input_sentence)
+            sentiment_pipeline = pipeline("sentiment-analysis", model="oliverguhr/german-sentiment-bert")
+            sentiment = sentiment_pipeline(translated_sentence)
+            return jsonify({
+                "translated_sentence": translated_sentence,
+                "sentiment": sentiment
+            })
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    return jsonify({"error": "No sentence provided"}), 400
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+    if model_loaded and source_vectorization_loaded and target_vectorization_loaded:
+        target_vocab = target_vectorization.get_vocabulary()
+        target_index_lookup = dict(zip(range(len(target_vocab)), target_vocab))
+        app.run(host='0.0.0.0', port=8000)
+    else:
+        print("Error: Model or vectorization layers failed to load.")
