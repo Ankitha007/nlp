@@ -20,8 +20,7 @@ class PositionalEmbedding(keras.layers.Layer):
 
     def call(self, inputs):
         embedded_tokens = self.token_embeddings(inputs)
-        length = tf.shape(inputs)[-1]
-        positions = tf.range(start=0, limit=length, delta=1)
+        positions = tf.range(start=0, limit=self.sequence_length, delta=1)
         embedded_positions = self.position_embeddings(positions)
         return embedded_tokens + embedded_positions
 
@@ -175,6 +174,10 @@ def is_hdf5(filepath):
     except Exception:
         return False
 
+# Check if the model file is a valid HDF5 file
+if not is_hdf5(model_path):
+    raise ValueError(f"The model file at {model_path} is not a valid HDF5 file or is corrupted.")
+
 # Load the trained Transformer model within a custom object scope
 custom_objects = {
     "PositionalEmbedding": PositionalEmbedding,
@@ -184,7 +187,7 @@ custom_objects = {
 }
 
 with keras.utils.custom_object_scope(custom_objects):
-    transformer = tf.keras.models.load_model('model.h5', compile=False)
+    transformer = tf.keras.models.load_model(model_path, compile=False)
 
 # Load the vectorization layers
 with open(source_vector_path, 'rb') as f:
