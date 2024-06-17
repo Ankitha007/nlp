@@ -184,7 +184,7 @@ custom_objects = {
 }
 
 with keras.utils.custom_object_scope(custom_objects):
-    transformer = keras.models.load_model('model.h5', compile=False)
+    transformer = tf.keras.models.load_model('model.h5', compile=False)
 
 # Load the vectorization layers
 with open(source_vector_path, 'rb') as f:
