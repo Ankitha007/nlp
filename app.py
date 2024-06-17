@@ -16,11 +16,7 @@ assert os.path.exists(source_vector_path), f"Source vectorization file not found
 assert os.path.exists(target_vector_path), f"Target vectorization file not found: {target_vector_path}"
 
 # Load the trained Transformer model
-transformer = keras.models.load_model(model_path,
-                                      custom_objects={'PositionalEmbedding': PositionalEmbedding,
-                                                      'TransformerEncoder': TransformerEncoder,
-                                                      'TransformerDecoder': TransformerDecoder,
-                                                      'MultiHeadAttention': MultiHeadAttention})
+transformer = keras.models.load_model(model_path)
 
 # Load the vectorization layers
 with open(source_vector_path, 'rb') as f:
