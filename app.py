@@ -157,7 +157,7 @@ class TransformerDecoder(keras.layers.Layer):
 # Download the model file if it does not exist
 model_path = 'transformer_model.h5'
 if not os.path.isfile(model_path):
-    subprocess.run(['curl --output transformer_model.h5 "https://media.githubusercontent.com/media/username/repository/main/transformer_model.h5"'], shell=True)
+    subprocess.run(['curl --output transformer_model.h5 "https://media.githubusercontent.com/media/Ankitha007/nlp/main/transformer_model.h5"'], shell=True)
 
 # Verify file paths
 source_vector_path = 'source_vectorization.pkl'
@@ -173,10 +173,6 @@ def is_hdf5(filepath):
             return True
     except Exception:
         return False
-
-# Check if the model file is a valid HDF5 file
-if not is_hdf5(model_path):
-    raise ValueError(f"The model file at {model_path} is not a valid HDF5 file or is corrupted.")
 
 # Load the trained Transformer model within a custom object scope
 custom_objects = {
