@@ -1,6 +1,8 @@
-Flask==2.0.1
-gunicorn==20.1.0
-numpy==1.19.5
-tensorflow==2.6.0
-transformers==4.9.1
-gdown==4.2.0
+streamlit
+tensorflow==2.15.0
+keras
+transformers
+pandas
+numpy
+matplotlib
+scikit-learn
