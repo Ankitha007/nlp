@@ -4,19 +4,29 @@ from tensorflow import keras
 import numpy as np
 import pickle
 from transformers import pipeline
+import os
+
+# Verify file paths
+model_path = 'transformer_model.h5'
+source_vector_path = 'source_vectorization.pkl'
+target_vector_path = 'target_vectorization.pkl'
+
+assert os.path.exists(model_path), f"Model file not found: {model_path}"
+assert os.path.exists(source_vector_path), f"Source vectorization file not found: {source_vector_path}"
+assert os.path.exists(target_vector_path), f"Target vectorization file not found: {target_vector_path}"
 
 # Load the trained Transformer model
-transformer = keras.models.load_model('transformer_model.h5',
+transformer = keras.models.load_model(model_path,
                                       custom_objects={'PositionalEmbedding': PositionalEmbedding,
                                                       'TransformerEncoder': TransformerEncoder,
                                                       'TransformerDecoder': TransformerDecoder,
                                                       'MultiHeadAttention': MultiHeadAttention})
 
 # Load the vectorization layers
-with open('source_vectorization.pkl', 'rb') as f:
+with open(source_vector_path, 'rb') as f:
     source_vectorization = pickle.load(f)
 
-with open('target_vectorization.pkl', 'rb') as f:
+with open(target_vector_path, 'rb') as f:
     target_vectorization = pickle.load(f)
 
 target_vocab = target_vectorization.get_vocabulary()
