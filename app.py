@@ -158,7 +158,7 @@ class TransformerDecoder(keras.layers.Layer):
 # Download the model file if it does not exist
 model_path = 'transformer_model.h5'
 if not os.path.isfile(model_path):
-    subprocess.run(['curl --output transformer_model.h5 "https://media.githubusercontent.com/media/Ankitha007/nlp/main/transformer_model.h5"'], shell=True)
+    subprocess.run(['curl --output transformer_model.h5 "https://media.githubusercontent.com/media/username/repository/main/transformer_model.h5"'], shell=True)
 
 # Verify file paths
 source_vector_path = 'source_vectorization.pkl'
@@ -225,4 +225,20 @@ sentiment_pipeline = pipeline("sentiment-analysis", model="oliverguhr/german-sen
 st.title('English to German Translation App')
 
 st.write("""
-This app translates English
+This app translates English sentences to German using a Transformer model.
+Additionally, it performs sentiment analysis on the translated German sentences.
+""")
+
+# Input text box
+input_sentence = st.text_input("Enter an English sentence:")
+
+if st.button("Translate"):
+    if input_sentence:
+        translated_sentence = decode_sequence(input_sentence)
+        sentiment = sentiment_pipeline(translated_sentence)
+
+        st.write("**English:**", input_sentence)
+        st.write("**German:**", translated_sentence)
+        st.write("**Sentiment:**", sentiment[0]['label'], "with score:", sentiment[0]['score'])
+    else:
+        st.write("Please enter a sentence to translate.")
