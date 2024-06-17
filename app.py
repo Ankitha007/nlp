@@ -15,8 +15,11 @@ assert os.path.exists(model_path), f"Model file not found: {model_path}"
 assert os.path.exists(source_vector_path), f"Source vectorization file not found: {source_vector_path}"
 assert os.path.exists(target_vector_path), f"Target vectorization file not found: {target_vector_path}"
 
+import subprocess
+if not os.path.isfile('model.h5'):
+    subprocess.run(['curl --output model.h5 "https://media.githubusercontent.com/media/Ankitha007/nlp/main/transformer_model.h5"'], shell=True)
 # Load the trained Transformer model
-transformer = keras.models.load_model(model_path)
+transformer = tf.keras.models.load_model('model.h5', compile=False)
 
 # Load the vectorization layers
 with open(source_vector_path, 'rb') as f:
