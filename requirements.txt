@@ -1,8 +1,3 @@
 streamlit
-tensorflow==2.15.0
-keras
+tensorflow
 transformers
-pandas
-numpy
-matplotlib
-scikit-learn
